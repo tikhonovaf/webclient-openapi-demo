@@ -1,0 +1,36 @@
+openapi: 3.0.0
+info:
+  title: Pet Store
+  version: 1.0.0
+servers:
+  - url: http://localhost:8089 # Лучше указать полный URL для ясности
+paths:
+  /pets/{petId}:
+    get:
+      tags:
+        - Pet # Это превратит DefaultApi в PetApi
+      operationId: getPetById
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64 # Будет сгенерирован как Long
+        name:
+          type: string
