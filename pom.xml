@@ -60,7 +60,8 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version> <scope>provided</scope>
+            <version>1.18.30</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -82,12 +83,13 @@
                             <apiPackage>com.example.api</apiPackage>
                             <modelPackage>com.example.model</modelPackage>
                             <generateApiTests>false</generateApiTests>
-                            <generateModelTests>false</generateModelTests>                            <configOptions>
+                            <generateModelTests>false</generateModelTests>
+                            <configOptions>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <serializationLibrary>jackson</serializationLibrary>
                                 <useJakartaEe>true</useJakartaEe>
                                 <openApiNullable>false</openApiNullable>
-<!--                                <generateClientAsBean>true</generateClientAsBean>-->
+                                <!--                                <generateClientAsBean>true</generateClientAsBean>-->
                                 <generateApis>true</generateApis>
                                 <generateModels>true</generateModels>
                             </configOptions>
