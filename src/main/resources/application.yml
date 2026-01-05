@@ -1,3 +1,43 @@
-external:
-  api:
-    base-url: http://localhost:8089
+server:
+  port: 8080
+
+services:
+  pet:
+    url: http://localhost:8081 # любой дефолт
+  store:
+    url: http://localhost:8082
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      externalServiceCB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+  retry:
+    instances:
+      externalServiceRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
+          - java.util.concurrent.TimeoutException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, resilience4j
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha # Сортировка методов по алфавиту
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: ru.webclientpetstore.controller # Укажите ваш пакет с контроллерами

@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: Petstore Aggregator API
+  version: 1.0.0
+  description: API нашего сервиса, который объединяет данные из Pet и Store сервисов.
+paths:
+  /aggregate/{petId}/{storeId}:
+    get:
+      tags:
+        - aggregate
+      summary: Получить агрегированную информацию о питомце и заказе
+      operationId: aggregatePetAndStore
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: storeId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Успешная агрегация данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedInfo'
+        '404':
+          description: Данные не найдены в одном из внешних сервисов
+components:
+  schemas:
+    AggregatedInfo:
+      type: object
+      properties:
+        petName:
+          type: string
+          description: Имя питомца, полученное из Pet Service
+          example: "Barsik"
+        storeStatus:
+          type: string
+          description: Статус заказа, полученный из Store Service
+          example: "delivered"

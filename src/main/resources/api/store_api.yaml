@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: External Store Service
+  version: 1.0.0
+  description: Спецификация внешнего сервиса для получения информации о магазинах.
+paths:
+  /store/{storeId}:
+    get:
+      tags:
+        - store
+      summary: Получить информацию о магазине по ID
+      operationId: getStoreById
+      parameters:
+        - name: storeId
+          in: path
+          required: true
+          description: ID магазина для поиска
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '404':
+          description: Магазин не найден
+components:
+  schemas:
+    Store:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: "Центральный приют"
+        address:
+          type: string
+          example: "ул. Пушкина, д. 10"
+        status:
+          type: string
+          description: Текущий статус работы магазина
+          enum: [open, closed, renovation]
