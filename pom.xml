@@ -104,6 +104,8 @@
                             <library>webclient</library>
                             <apiPackage>ru.webclientpetstore.client.pet.api</apiPackage>
                             <modelPackage>ru.webclientpetstore.client.pet.model</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
                             <configOptions>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <interfaceOnly>true</interfaceOnly>
@@ -125,6 +127,8 @@
                             <library>webclient</library>
                             <apiPackage>ru.webclientpetstore.client.store.api</apiPackage>
                             <modelPackage>ru.webclientpetstore.client.store.model</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
                             <configOptions>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <interfaceOnly>true</interfaceOnly>
@@ -145,6 +149,8 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>ru.webclientpetstore.server.api</apiPackage>
                             <modelPackage>ru.webclientpetstore.server.model</modelPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
                             <configOptions>
                                 <useSpringBoot3>true</useSpringBoot3>
                                 <interfaceOnly>true</interfaceOnly>

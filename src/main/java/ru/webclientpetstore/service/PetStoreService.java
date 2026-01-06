@@ -25,14 +25,14 @@ public class PetStoreService {
     public Mono<AggregatedInfo> getAggregatedData(Long petId, Long storeId) {
         return Mono.zip(
                         // Плечо PET с логикой повторов
-                        petApi.getPetById(petId)
-                                .timeout(Duration.ofSeconds(3))
+                         // Используем defer, чтобы каждый retry создавал новый холодный поток
+                        Mono.defer(() -> petApi.getPetById(petId))                                .timeout(Duration.ofSeconds(3))
                                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
                                         .filter(ex -> ex instanceof WebClientResponseException.InternalServerError ||
                                                 ex instanceof java.util.concurrent.TimeoutException)),
 
                         // Плечо STORE с логикой повторов
-                        storeApi.getStoreById(storeId)
+                        Mono.defer(() -> storeApi.getStoreById(storeId))
                                 .timeout(Duration.ofSeconds(3))
                                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                 )
