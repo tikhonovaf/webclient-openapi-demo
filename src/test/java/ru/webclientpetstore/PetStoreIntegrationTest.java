@@ -81,12 +81,21 @@ class PetStoreIntegrationTest {
         wireMock.stubFor(get(urlEqualTo("/pet/1"))
                 .inScenario(scenario)
                 .whenScenarioStateIs("Success State")
-                .willReturn(okJson("{\"id\": 1, \"name\": \"Surviving Doggo\"}")));
+                .willReturn(okJson("""
+                        {
+                          "id": 1,
+                          "name": "Surviving Doggo"
+                        }
+                        """)));
 
         // Store API всегда отвечает 200
         wireMock.stubFor(get(urlEqualTo("/store/1"))
-                .willReturn(okJson("{\"id\": 1, \"status\": \"open\"}")));
-
+                .willReturn(okJson("""
+                        {
+                          "id": 1,
+                          "status": "open"
+                        }
+                        """)));
         StepVerifier.create(petStoreService.getAggregatedData(1L, 1L))
                 .expectNextMatches(info -> "Surviving Doggo".equals(info.getPetName()))
                 .verifyComplete();
