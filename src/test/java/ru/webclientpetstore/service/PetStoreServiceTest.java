@@ -1,9 +1,12 @@
 package ru.webclientpetstore.service;
 
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.BeforeEach;
 import ru.webclientpetstore.client.pet.api.PetApi;
 import ru.webclientpetstore.client.pet.model.Pet;
-import ru.webclientpetstore.client.store.model.Store;
 import ru.webclientpetstore.client.store.api.StoreApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +23,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class PetStoreServiceTest {
@@ -30,8 +34,25 @@ class PetStoreServiceTest {
     @Mock
     private StoreApi storeApi;
 
-    @InjectMocks
+    // Используем реальный реестр в памяти вместо мока
+    private MeterRegistry meterRegistry;
+
+    // Нам нужно проинициализировать мок счетчика,
+    // так как сервис вызывает .counter() в конструкторе
+    @Mock
+    private Counter fallbackCounter;
+
+    // Убираем @InjectMocks, будем создавать вручную
     private PetStoreService petStoreService;
+
+    @BeforeEach
+    void setUp() {
+        // Создаем чистый реестр перед каждым тестом
+        meterRegistry = new SimpleMeterRegistry();
+
+        // Вручную создаем экземпляр сервиса
+        petStoreService = new PetStoreService(petApi, storeApi, meterRegistry);
+    }
 
     @Test
     @DisplayName("Успешное объединение данных при корректном ответе обоих API")

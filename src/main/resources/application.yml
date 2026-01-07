@@ -29,10 +29,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, resilience4j
+        include: prometheus, health, info, metrics, resilience4j
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true # Метрики для WebClient
 
 springdoc:
   swagger-ui:
@@ -41,3 +48,4 @@ springdoc:
   api-docs:
     path: /v3/api-docs
   packages-to-scan: ru.webclientpetstore.controller # Укажите ваш пакет с контроллерами
+

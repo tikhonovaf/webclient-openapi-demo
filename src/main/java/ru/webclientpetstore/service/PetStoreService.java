@@ -8,6 +8,8 @@ import ru.webclientpetstore.client.pet.api.PetApi;
 import ru.webclientpetstore.client.store.api.StoreApi;
 import ru.webclientpetstore.server.model.AggregatedInfo;
 import reactor.util.retry.Retry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 
 import java.time.Duration;
 
@@ -16,11 +18,16 @@ public class PetStoreService {
 
     private final PetApi petApi;
     private final StoreApi storeApi;
+    private final Counter fallbackCounter;
 
-    public PetStoreService(PetApi petApi, StoreApi storeApi) {
+    public PetStoreService(PetApi petApi, StoreApi storeApi, MeterRegistry registry) {
         this.petApi = petApi;
         this.storeApi = storeApi;
-    }
+// Создаем и регистрируем счетчик с понятным названием
+        this.fallbackCounter = Counter.builder("petstore.aggregation.fallback")
+                .description("Количество срабатываний fallback-логики")
+                .tag("type", "total")
+                .register(registry);    }
 
     public Mono<AggregatedInfo> getAggregatedData(Long petId, Long storeId) {
         return Mono.zip(
@@ -45,6 +52,7 @@ public class PetStoreService {
                 // Если после всех попыток всё еще ошибка — идем в Fallback
                 .onErrorResume(e -> {
                     System.err.println("Final error after retries: " + e.getMessage());
+                    fallbackCounter.increment(); // Увеличиваем счетчик при каждом отказе
                     AggregatedInfo fallback = new AggregatedInfo();
                     fallback.setPetName("Unknown (Service Unavailable)");
                     fallback.setStoreStatus("N/A");
