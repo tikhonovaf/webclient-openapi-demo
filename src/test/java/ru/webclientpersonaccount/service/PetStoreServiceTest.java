@@ -1,13 +1,13 @@
-package ru.webclientpetstore.service;
+package ru.webclientpersonaccount.service;
 
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
-import ru.webclientpetstore.client.pet.api.PetApi;
-import ru.webclientpetstore.client.pet.model.Pet;
-import ru.webclientpetstore.client.store.api.StoreApi;
+import ru.webclientpersonaccount.client.person.api.PersonApi;
+import ru.webclientpersonaccount.client.person.model.Person;
+import ru.webclientpersonaccount.client.account.api.AccountApi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,13 +26,13 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-class PetStoreServiceTest {
+class PersonAccountServiceTest {
 
     @Mock
-    private PetApi petApi;
+    private PersonApi personApi;
 
     @Mock
-    private StoreApi storeApi;
+    private AccountApi accountApi;
 
     // Используем реальный реестр в памяти вместо мока
     private MeterRegistry meterRegistry;
@@ -43,7 +43,7 @@ class PetStoreServiceTest {
     private Counter fallbackCounter;
 
     // Убираем @InjectMocks, будем создавать вручную
-    private PetStoreService petStoreService;
+    private PersonAccountService personAccountService;
 
     @BeforeEach
     void setUp() {
@@ -51,28 +51,28 @@ class PetStoreServiceTest {
         meterRegistry = new SimpleMeterRegistry();
 
         // Вручную создаем экземпляр сервиса
-        petStoreService = new PetStoreService(petApi, storeApi, meterRegistry);
+        personAccountService = new PersonAccountService(personApi, accountApi, meterRegistry);
     }
 
     @Test
     @DisplayName("Успешное объединение данных при корректном ответе обоих API")
     void shouldReturnAggregatedDataWhenBothApisSucceed() {
         // Создаем моки ответов.
-        // Вместо конкретных классов используем mock() для Store, раз его имя неизвестно
-        Pet mockPet = new Pet();
-        mockPet.setName("Barsik");
+        // Вместо конкретных классов используем mock() для Account, раз его имя неизвестно
+        Person mockPerson = new Person();
+        mockPerson.setName("Barsik");
 
-        // Имитируем объект из StoreApi, у которого есть getStatus().getValue()
-        var mockStoreResponse = mock(ru.webclientpetstore.client.store.model.Store.class, RETURNS_DEEP_STUBS);
-        when(mockStoreResponse.getStatus().getValue()).thenReturn("available");
+        // Имитируем объект из AccountApi, у которого есть getStatus().getValue()
+        var mockAccountResponse = mock(ru.webclientpersonaccount.client.account.model.Account.class, RETURNS_DEEP_STUBS);
+        when(mockAccountResponse.getStatus().getValue()).thenReturn("available");
 
-        when(petApi.getPetById(1L)).thenReturn(Mono.just(mockPet));
-        when(storeApi.getStoreById(2L)).thenReturn(Mono.just(mockStoreResponse));
+        when(personApi.getPersonById(1L)).thenReturn(Mono.just(mockPerson));
+        when(accountApi.getAccountById(2L)).thenReturn(Mono.just(mockAccountResponse));
 
-        StepVerifier.create(petStoreService.getAggregatedData(1L, 2L))
+        StepVerifier.create(personAccountService.getAggregatedData(1L, 2L))
                 .expectNextMatches(info ->
-                        "Barsik".equals(info.getPetName()) &&
-                                "available".equals(info.getStoreStatus()))
+                        "Barsik".equals(info.getPersonName()) &&
+                                "available".equals(info.getAccountStatus()))
                 .verifyComplete();
     }
 
@@ -80,42 +80,42 @@ class PetStoreServiceTest {
     @SuppressWarnings("unchecked") // Подавляем предупреждение о generics
     @DisplayName("Проверка Retry: Успех после одной ошибки 500")
     void shouldRetryOnInternalServerErrorAndSucceed() {
-        Pet mockPet = new Pet();
-        mockPet.setName("RetryPet");
+        Person mockPerson = new Person();
+        mockPerson.setName("RetryPerson");
 
-        var mockStoreResponse = mock(ru.webclientpetstore.client.store.model.Store.class, RETURNS_DEEP_STUBS);
-        when(mockStoreResponse.getStatus().getValue()).thenReturn("ok");
+        var mockAccountResponse = mock(ru.webclientpersonaccount.client.account.model.Account.class, RETURNS_DEEP_STUBS);
+        when(mockAccountResponse.getStatus().getValue()).thenReturn("ok");
 
-        when(petApi.getPetById(1L))
+        when(personApi.getPersonById(1L))
                 .thenReturn(Mono.error(WebClientResponseException.create(500, "Error", null, null, null)))
-                .thenReturn(Mono.just(mockPet));
+                .thenReturn(Mono.just(mockPerson));
 
-        when(storeApi.getStoreById(anyLong())).thenReturn(Mono.just(mockStoreResponse));
+        when(accountApi.getAccountById(anyLong())).thenReturn(Mono.just(mockAccountResponse));
 
         // Используем withVirtualTime, чтобы "промотать" 1 секунду задержки ретрая
-        StepVerifier.withVirtualTime(() -> petStoreService.getAggregatedData(1L, 2L))
+        StepVerifier.withVirtualTime(() -> personAccountService.getAggregatedData(1L, 2L))
                 .expectSubscription()
                 .thenAwait(Duration.ofSeconds(2)) // Ждем виртуальные 2 секунды (хватит для ретрая)
-                .expectNextMatches(info -> "RetryPet".equals(info.getPetName()))
+                .expectNextMatches(info -> "RetryPerson".equals(info.getPersonName()))
                 .verifyComplete();
 
-        verify(petApi, times(2)).getPetById(1L);
+        verify(personApi, times(2)).getPersonById(1L);
     }
 
     @Test
     @DisplayName("Fallback: возврат дефолтных данных после всех неудачных попыток")
     void shouldReturnFallbackAfterAllRetriesFailed() {
         // Всегда возвращаем ошибку, которая должна триггерить Retry, а затем Fallback
-        when(petApi.getPetById(anyLong())).thenReturn(Mono.error(new TimeoutException("Timeout!")));
+        when(personApi.getPersonById(anyLong())).thenReturn(Mono.error(new TimeoutException("Timeout!")));
 
-        // Для Store просто возвращаем что угодно
-        var mockStoreResponse = mock(ru.webclientpetstore.client.store.model.Store.class, RETURNS_DEEP_STUBS);
-        when(storeApi.getStoreById(anyLong())).thenReturn(Mono.just(mockStoreResponse));
+        // Для Account просто возвращаем что угодно
+        var mockAccountResponse = mock(ru.webclientpersonaccount.client.account.model.Account.class, RETURNS_DEEP_STUBS);
+        when(accountApi.getAccountById(anyLong())).thenReturn(Mono.just(mockAccountResponse));
 
-        StepVerifier.create(petStoreService.getAggregatedData(1L, 1L))
+        StepVerifier.create(personAccountService.getAggregatedData(1L, 1L))
                 .expectNextMatches(info ->
-                        "Unknown (Service Unavailable)".equals(info.getPetName()) &&
-                                "N/A".equals(info.getStoreStatus()))
+                        "Unknown (Service Unavailable)".equals(info.getPersonName()) &&
+                                "N/A".equals(info.getAccountStatus()))
                 .verifyComplete();
     }
 }

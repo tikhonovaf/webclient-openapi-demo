@@ -1,14 +1,14 @@
-package ru.webclientpetstore.service;
+package ru.webclientpersonaccount.service;
 
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-import ru.webclientpetstore.client.pet.api.PetApi;
-import ru.webclientpetstore.client.store.api.StoreApi;
-import ru.webclientpetstore.exception.EntityNotFoundException;
-import ru.webclientpetstore.server.model.AggregatedInfo;
+import ru.webclientpersonaccount.client.person.api.PersonApi;
+import ru.webclientpersonaccount.client.account.api.AccountApi;
+import ru.webclientpersonaccount.exception.EntityNotFoundException;
+import ru.webclientpersonaccount.server.model.AggregatedInfo;
 import reactor.util.retry.Retry;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,46 +17,46 @@ import java.time.Duration;
 
 @Slf4j
 @Service
-public class PetStoreService {
+public class PersonAccountService {
 
-    private final PetApi petApi;
-    private final StoreApi storeApi;
+    private final PersonApi personApi;
+    private final AccountApi accountApi;
     private final Counter fallbackCounter;
 
-    public PetStoreService(PetApi petApi, StoreApi storeApi, MeterRegistry registry) {
-        this.petApi = petApi;
-        this.storeApi = storeApi;
+    public PersonAccountService(PersonApi personApi, AccountApi accountApi, MeterRegistry registry) {
+        this.personApi = personApi;
+        this.accountApi = accountApi;
         // Создаем и регистрируем счетчик с понятным названием
-        this.fallbackCounter = Counter.builder("petstore.aggregation.fallback")
+        this.fallbackCounter = Counter.builder("personaccount.aggregation.fallback")
                 .description("Количество срабатываний fallback-логики")
                 .tag("type", "total")
                 .register(registry);
     }
 
-    public Mono<AggregatedInfo> getAggregatedData(Long petId, Long storeId) {
+    public Mono<AggregatedInfo> getAggregatedData(Long personId, Long accountId) {
         return Mono.zip(
-                        // Плечо PET с логикой повторов
+                        // Плечо Person с логикой повторов
                         // Используем defer, чтобы каждый retry создавал новый холодный поток
-                        Mono.defer(() -> petApi.getPetById(petId))
+                        Mono.defer(() -> personApi.getPersonById(personId))
                                 .timeout(Duration.ofSeconds(3))
                                 // Если пришел 404 — превращаем в наше исключение
                                 .onErrorMap(WebClientResponseException.NotFound.class,
-                                        e -> new EntityNotFoundException("Питомец с ID " + petId + " не найден"))
+                                        e -> new EntityNotFoundException("Клиент с ID " + personId + " не найден"))
                                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
                                         .filter(ex -> ex instanceof WebClientResponseException.InternalServerError ||
                                                 ex instanceof java.util.concurrent.TimeoutException)),
 
-                        // Плечо STORE с логикой повторов
-                        Mono.defer(() -> storeApi.getStoreById(storeId))
+                        // Плечо ACCOUNT с логикой повторов
+                        Mono.defer(() -> accountApi.getAccountById(accountId))
                                 .timeout(Duration.ofSeconds(3))
                                 .onErrorMap(WebClientResponseException.NotFound.class,
-                                        e -> new EntityNotFoundException("Заказ с ID " + storeId + " не найден"))
+                                        e -> new EntityNotFoundException("Заказ с ID " + accountId + " не найден"))
                                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
                 )
                 .map(tuple -> {
                     AggregatedInfo info = new AggregatedInfo();
-                    info.setPetName(tuple.getT1().getName());
-                    info.setStoreStatus(tuple.getT2().getStatus().getValue());
+                    info.setPersonName(tuple.getT1().getName());
+                    info.setAccountStatus(tuple.getT2().getStatus().getValue());
                     return info;
                 })
                 // Если после всех попыток всё еще ошибка — идем в Fallback
@@ -71,8 +71,8 @@ public class PetStoreService {
                     fallbackCounter.increment();
 
                     AggregatedInfo fallback = new AggregatedInfo();
-                    fallback.setPetName("Unknown (Service Unavailable)");
-                    fallback.setStoreStatus("N/A");
+                    fallback.setPersonName("Unknown (Service Unavailable)");
+                    fallback.setAccountStatus("N/A");
                     return Mono.just(fallback);
                 });
     }

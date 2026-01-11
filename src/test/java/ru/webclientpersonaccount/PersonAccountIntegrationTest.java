@@ -1,9 +1,9 @@
-package ru.webclientpetstore;
+package ru.webclientpersonaccount;
 
 
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import ru.webclientpetstore.service.PetStoreService;
+import ru.webclientpersonaccount.service.PersonAccountService;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,10 +18,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class PetStoreIntegrationTest {
+class PersonAccountIntegrationTest {
 
     @Autowired
-    private PetStoreService petStoreService;
+    private PersonAccountService personAccountService;
 
     @Autowired
     private WebTestClient webTestClient;
@@ -35,38 +35,38 @@ class PetStoreIntegrationTest {
     // Перехватываем настройки из application.yml и подменяем URL на WireMock
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("services.pet.url", wireMock::baseUrl);
-        registry.add("services.store.url", wireMock::baseUrl);
+        registry.add("services.person.url", wireMock::baseUrl);
+        registry.add("services.account.url", wireMock::baseUrl);
     }
 
     @Test
-    @DisplayName("Успешная агрегация данных из Pet и Store сервисов")
+    @DisplayName("Успешная агрегация данных из Person и Account сервисов")
     void shouldReturnAggregatedDataSuccessfully() {
-        // Настройка стаба для Pet API
-        wireMock.stubFor(get(urlEqualTo("/pet/1"))
+        // Настройка стаба для Person API
+        wireMock.stubFor(get(urlEqualTo("/person/1"))
                 .willReturn(okJson("""
                         {
                           "id": 1,
                           "name": "Doggo",
-                          "status": "available"
+                          "status": "active"
                         }
                         """)));
 
-        // Настройка стаба для Store API
-        wireMock.stubFor(get(urlEqualTo("/store/1"))
+        // Настройка стаба для Account API
+        wireMock.stubFor(get(urlEqualTo("/account/1"))
                 .willReturn(okJson("""
                         {
                           "id": 1,
-                          "name": "Central Pet Shop",
+                          "name": "Central Person Shop",
                           "status": "open"
                         }
                         """)));
 
         // Тестирование реактивного метода сервиса
-        StepVerifier.create(petStoreService.getAggregatedData(1L, 1L))
+        StepVerifier.create(personAccountService.getAggregatedData(1L, 1L))
                 .expectNextMatches(info ->
-                        "Doggo".equals(info.getPetName()) &&
-                                "open".equals(info.getStoreStatus()))
+                        "Doggo".equals(info.getPersonName()) &&
+                                "open".equals(info.getAccountStatus()))
                 .verifyComplete();
     }
 
@@ -75,15 +75,15 @@ class PetStoreIntegrationTest {
     void shouldRetryOnExternalErrorAndSucceed() {
         String scenario = "Retry Scenario";
 
-        // 1-й вызов Pet API вернет 500
-        wireMock.stubFor(get(urlEqualTo("/pet/1"))
+        // 1-й вызов Person API вернет 500
+        wireMock.stubFor(get(urlEqualTo("/person/1"))
                 .inScenario(scenario)
                 .whenScenarioStateIs(com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED)
                 .willReturn(aResponse().withStatus(500))
                 .willSetStateTo("Success State"));
 
-        // 2-й вызов Pet API (Retry) вернет 200
-        wireMock.stubFor(get(urlEqualTo("/pet/1"))
+        // 2-й вызов Person API (Retry) вернет 200
+        wireMock.stubFor(get(urlEqualTo("/person/1"))
                 .inScenario(scenario)
                 .whenScenarioStateIs("Success State")
                 .willReturn(okJson("""
@@ -93,34 +93,34 @@ class PetStoreIntegrationTest {
                         }
                         """)));
 
-        // Store API всегда отвечает 200
-        wireMock.stubFor(get(urlEqualTo("/store/1"))
+        // Account API всегда отвечает 200
+        wireMock.stubFor(get(urlEqualTo("/account/1"))
                 .willReturn(okJson("""
                         {
                           "id": 1,
                           "status": "open"
                         }
                         """)));
-        StepVerifier.create(petStoreService.getAggregatedData(1L, 1L))
-                .expectNextMatches(info -> "Surviving Doggo".equals(info.getPetName()))
+        StepVerifier.create(personAccountService.getAggregatedData(1L, 1L))
+                .expectNextMatches(info -> "Surviving Doggo".equals(info.getPersonName()))
                 .verifyComplete();
 
-        // Проверяем, что было действительно 2 запроса к Pet API
-        wireMock.verify(2, getRequestedFor(urlEqualTo("/pet/1")));
+        // Проверяем, что было действительно 2 запроса к Person API
+        wireMock.verify(2, getRequestedFor(urlEqualTo("/person/1")));
     }
 
     @Test
     @DisplayName("Проверка Fallback: возврат дефолтных данных при полной недоступности")
     void shouldReturnFallbackWhenServicesAreDown() {
-        // Настраиваем вечную ошибку 500 для Pet API
-        wireMock.stubFor(get(urlPathMatching("/pet/.*"))
+        // Настраиваем вечную ошибку 500 для Person API
+        wireMock.stubFor(get(urlPathMatching("/person/.*"))
                 .willReturn(aResponse().withStatus(500)));
 
         // После исчерпания Retry должен сработать Fallback метод
-        StepVerifier.create(petStoreService.getAggregatedData(1L, 1L))
+        StepVerifier.create(personAccountService.getAggregatedData(1L, 1L))
                 .expectNextMatches(info ->
-                        "Unknown (Service Unavailable)".equals(info.getPetName()) &&
-                                "N/A".equals(info.getStoreStatus()))
+                        "Unknown (Service Unavailable)".equals(info.getPersonName()) &&
+                                "N/A".equals(info.getAccountStatus()))
                 .verifyComplete();
     }
 
@@ -128,14 +128,14 @@ class PetStoreIntegrationTest {
     @DisplayName("Интеграция: внешнее API возвращает 404 -> Наш контроллер возвращает ProblemDetail 404")
     void shouldReturn404ProblemDetailWhenExternalServiceReturns404() {
         // 1. Настраиваем WireMock на возврат 404 для конкретного ID
-        wireMock.stubFor(get(urlEqualTo("/pet/404"))
+        wireMock.stubFor(get(urlEqualTo("/person/404"))
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader("Content-Type", "application/json")
-                        .withBody("{\"message\": \"Pet not found in external system\"}")));
+                        .withBody("{\"message\": \"Person not found in external system\"}")));
 
-        // Store API пусть отвечает успешно
-        wireMock.stubFor(get(urlPathMatching("/store/.*"))
+        // Account API пусть отвечает успешно
+        wireMock.stubFor(get(urlPathMatching("/account/.*"))
                 .willReturn(okJson("{\"id\": 1, \"status\": \"open\"}")));
 
         // 2. Вызываем наш КОНТРОЛЛЕР (не сервис напрямую!)

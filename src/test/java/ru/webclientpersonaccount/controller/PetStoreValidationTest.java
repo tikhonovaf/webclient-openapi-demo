@@ -1,4 +1,4 @@
-package ru.webclientpetstore.controller;
+package ru.webclientpersonaccount.controller;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,26 +10,26 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
-import ru.webclientpetstore.exception.EntityNotFoundException;
-import ru.webclientpetstore.exception.GlobalExceptionHandler;
-import ru.webclientpetstore.service.PetStoreService;
+import ru.webclientpersonaccount.exception.EntityNotFoundException;
+import ru.webclientpersonaccount.exception.GlobalExceptionHandler;
+import ru.webclientpersonaccount.service.PersonAccountService;
 
 import static org.hamcrest.Matchers.containsString;
 
-@WebFluxTest(controllers = PetStoreController.class)
+@WebFluxTest(controllers = PersonAccountController.class)
 @Import(GlobalExceptionHandler.class)
-class PetStoreValidationTest {
+class PersonAccountValidationTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
     // Вместо @MockBean теперь используем это:
     @MockitoBean
-    private PetStoreService petStoreService;
+    private PersonAccountService personAccountService;
 
 //    @Test
-//    @DisplayName("Должен вернуть 400, если petId меньше 1")
-//    void shouldReturn400WhenPetIdIsInvalid() {
+//    @DisplayName("Должен вернуть 400, если personId меньше 1")
+//    void shouldReturn400WhenPersonIdIsInvalid() {
 //        webTestClient.get()
 //                .uri("/aggregate/0/1")
 //                .exchange()
@@ -41,15 +41,15 @@ class PetStoreValidationTest {
 //    }
 
     @Test
-    @DisplayName("Должен вернуть 400 и ProblemDetail при petId = 0")
-    void shouldReturn400WhenPetIdIsInvalid() {
+    @DisplayName("Должен вернуть 400 и ProblemDetail при personId = 0")
+    void shouldReturn400WhenPersonIdIsInvalid() {
         // Arrange
-        Long invalidPetId = 0L;
-        Long storeId = 1L;
+        Long invalidPersonId = 0L;
+        Long accountId = 1L;
 
         // Act & Assert
         webTestClient.get()
-                .uri("/aggregate/{petId}/{storeId}", invalidPetId, storeId)
+                .uri("/aggregate/{personId}/{accountId}", invalidPersonId, accountId)
                 .exchange()
                 // 1. Проверяем статус
                 .expectStatus().isBadRequest()
@@ -59,25 +59,25 @@ class PetStoreValidationTest {
                 .expectBody()
                 .jsonPath("$.title").isEqualTo("Validation Failed") // Из вашего нового метода
                 .jsonPath("$.status").isEqualTo(400)
-                .jsonPath("$.detail").value(containsString("petId"))
+                .jsonPath("$.detail").value(containsString("personId"))
                 .jsonPath("$.detail").value(containsString("должно быть не меньше 1"))
                 .jsonPath("$.timestamp").exists();
     }
 
     @Test
-    @DisplayName("Должен вернуть 404, если сервис не нашел питомца")
-    void shouldReturn404WhenPetNotFound() {
+    @DisplayName("Должен вернуть 404, если сервис не нашел клиента")
+    void shouldReturn404WhenPersonNotFound() {
         // Arrange
-        Long petId = 99L;
-        Long storeId = 1L;
+        Long personId = 99L;
+        Long accountId = 1L;
 
         // Настраиваем мок: имитируем ситуацию, когда данные не найдены
-        Mockito.when(petStoreService.getAggregatedData(petId, storeId))
-                .thenReturn(Mono.error(new EntityNotFoundException("Питомец с ID " + petId + " не найден")));
+        Mockito.when(personAccountService.getAggregatedData(personId, accountId))
+                .thenReturn(Mono.error(new EntityNotFoundException("Клиент с ID " + personId + " не найден")));
 
         // Act & Assert
         webTestClient.get()
-                .uri("/aggregate/{petId}/{storeId}", petId, storeId)
+                .uri("/aggregate/{personId}/{accountId}", personId, accountId)
                 .exchange()
                 // 1. Ожидаем статус 404 NOT FOUND
                 .expectStatus().isNotFound()
@@ -85,7 +85,7 @@ class PetStoreValidationTest {
                 .expectBody()
                 .jsonPath("$.title").isEqualTo("Сущность не найдена") // Заголовок из вашего обработчика
                 .jsonPath("$.status").isEqualTo(404)
-                .jsonPath("$.detail").isEqualTo("Питомец с ID 99 не найден")
+                .jsonPath("$.detail").isEqualTo("Клиент с ID 99 не найден")
                 .jsonPath("$.instance").isEqualTo("/aggregate/99/1"); // Если вы добавили setInstance в обработчик
     }
 }

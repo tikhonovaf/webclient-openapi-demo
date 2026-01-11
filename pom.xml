@@ -9,7 +9,7 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>petstore-aggregator</artifactId>
+    <artifactId>personaccount-aggregator</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
@@ -109,16 +109,16 @@
                 <version>${openapi-generator.version}</version>
                 <executions>
                     <execution>
-                        <id>gen-pet-client</id>
+                        <id>gen-person-client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api/pet_api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api/person_api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
-                            <apiPackage>ru.webclientpetstore.client.pet.api</apiPackage>
-                            <modelPackage>ru.webclientpetstore.client.pet.model</modelPackage>
+                            <apiPackage>ru.webclientpersonaccount.client.person.api</apiPackage>
+                            <modelPackage>ru.webclientpersonaccount.client.person.model</modelPackage>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
                             <configOptions>
@@ -132,16 +132,16 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>gen-store-client</id>
+                        <id>gen-account-client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/api/store_api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/api/account_api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <library>webclient</library>
-                            <apiPackage>ru.webclientpetstore.client.store.api</apiPackage>
-                            <modelPackage>ru.webclientpetstore.client.store.model</modelPackage>
+                            <apiPackage>ru.webclientpersonaccount.client.account.api</apiPackage>
+                            <modelPackage>ru.webclientpersonaccount.client.account.model</modelPackage>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
                             <configOptions>
@@ -162,8 +162,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/api/internal_api.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>ru.webclientpetstore.server.api</apiPackage>
-                            <modelPackage>ru.webclientpetstore.server.model</modelPackage>
+                            <apiPackage>ru.webclientpersonaccount.server.api</apiPackage>
+                            <modelPackage>ru.webclientpersonaccount.server.model</modelPackage>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
                             <configOptions>

@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: External Account Service
+  version: 1.0.0
+  description: Спецификация внешнего сервиса для получения информации о счетах клиента .
+paths:
+  /account/{accountId}:
+    get:
+      tags:
+        - account
+      summary: Получить информацию о счете по ID
+      operationId: getAccountById
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: ID счета для поиска
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '404':
+          description: Счет не найден
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: "Основной счет"
+        address:
+          type: string
+          example: "ул. Пушкина, д. 10"
+        status:
+          type: string
+          description: Текущий статус
+          enum: [open, closed, blocked]

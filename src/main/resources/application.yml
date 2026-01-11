@@ -2,9 +2,9 @@ server:
   port: 8080
 
 services:
-  pet:
+  person:
     url: http://localhost:8081 # любой дефолт
-  store:
+  account:
     url: http://localhost:8082
 
 resilience4j:
@@ -47,5 +47,5 @@ springdoc:
     operationsSorter: alpha # Сортировка методов по алфавиту
   api-docs:
     path: /v3/api-docs
-  packages-to-scan: ru.webclientpetstore.controller # Укажите ваш пакет с контроллерами
+  packages-to-scan: ru.webclientpersonaccount.controller # Укажите ваш пакет с контроллерами
 

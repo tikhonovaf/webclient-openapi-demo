@@ -1,4 +1,4 @@
-package ru.webclientpetstore.controller;
+package ru.webclientpersonaccount.controller;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -7,30 +7,30 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean; // НОВЫЙ ИМПОРТ
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
-import ru.webclientpetstore.server.model.AggregatedInfo;
-import ru.webclientpetstore.service.PetStoreService;
+import ru.webclientpersonaccount.server.model.AggregatedInfo;
+import ru.webclientpersonaccount.service.PersonAccountService;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-@WebFluxTest(controllers = PetStoreController.class)
-class PetStoreControllerTest {
+@WebFluxTest(controllers = PersonAccountController.class)
+class PersonAccountControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
     @MockitoBean
-    private PetStoreService petStoreService;
+    private PersonAccountService personAccountService;
 
     @Test
-    @DisplayName("GET /aggregate/{petId}/{storeId} должен возвращать 200 и JSON")
+    @DisplayName("GET /aggregate/{personId}/{accountId} должен возвращать 200 и JSON")
     void shouldGetInfoSuccess() {
         // Arrange
         AggregatedInfo mockInfo = new AggregatedInfo();
-        mockInfo.setPetName("Rex");
-        mockInfo.setStoreStatus("available");
+        mockInfo.setPersonName("Rex");
+        mockInfo.setAccountStatus("available");
 
-        when(petStoreService.getAggregatedData(1L, 10L))
+        when(personAccountService.getAggregatedData(1L, 10L))
                 .thenReturn(Mono.just(mockInfo));
 
         // Act & Assert
@@ -40,8 +40,8 @@ class PetStoreControllerTest {
                 .expectStatus().isOk()
                 .expectHeader().contentType("application/json")
                 .expectBody()
-                .jsonPath("$.petName").isEqualTo("Rex")
-                .jsonPath("$.storeStatus").isEqualTo("available");
+                .jsonPath("$.personName").isEqualTo("Rex")
+                .jsonPath("$.accountStatus").isEqualTo("available");
     }
 
     @Test
@@ -49,10 +49,10 @@ class PetStoreControllerTest {
     void shouldReturnFallbackData() {
         // Arrange
         AggregatedInfo fallback = new AggregatedInfo();
-        fallback.setPetName("Unknown (Service Unavailable)");
-        fallback.setStoreStatus("N/A");
+        fallback.setPersonName("Unknown (Service Unavailable)");
+        fallback.setAccountStatus("N/A");
 
-        when(petStoreService.getAggregatedData(anyLong(), anyLong()))
+        when(personAccountService.getAggregatedData(anyLong(), anyLong()))
                 .thenReturn(Mono.just(fallback));
 
         // Act & Assert
@@ -61,7 +61,7 @@ class PetStoreControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.petName").isEqualTo("Unknown (Service Unavailable)")
-                .jsonPath("$.storeStatus").isEqualTo("N/A");
+                .jsonPath("$.personName").isEqualTo("Unknown (Service Unavailable)")
+                .jsonPath("$.accountStatus").isEqualTo("N/A");
     }
 }

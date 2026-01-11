@@ -1,16 +1,16 @@
 openapi: 3.0.0
 info:
-  title: Petstore Aggregator API
+  title: Personaccount Aggregator API
   version: 1.0.0
 paths:
-  /aggregate/{petId}/{storeId}:
+  /aggregate/{personId}/{accountId}:
     get:
       tags:
         - aggregate
       summary: Получить агрегированную информацию
-      operationId: aggregatePetAndStore
+      operationId: aggregatePersonAndAccount
       parameters:
-        - name: petId
+        - name: personId
           in: path
           required: true
           schema:
@@ -18,7 +18,7 @@ paths:
             format: int64
             minimum: 1          # ID не может быть меньше 1
             maximum: 999999     # Пример верхнего порога
-        - name: storeId
+        - name: accountId
           in: path
           required: true
           schema:
@@ -41,15 +41,15 @@ components:
     AggregatedInfo:
       type: object
       required:                 # Помечаем поля как обязательные в ответе
-        - petName
-        - storeStatus
+        - personName
+        - accountStatus
       properties:
-        petName:
+        personName:
           type: string
           minLength: 2          # Имя не короче 2 символов
           maxLength: 50         # Ограничение длины
           example: "Barsik"
-        storeStatus:
+        accountStatus:
           type: string
           pattern: '^[a-z]+$'   # Статус только строчными буквами (RegEx)
           example: "delivered"

@@ -1,4 +1,4 @@
-package ru.webclientpetstore.exception;
+package ru.webclientpersonaccount.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
