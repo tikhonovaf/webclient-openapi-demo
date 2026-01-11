@@ -2,13 +2,12 @@ openapi: 3.0.0
 info:
   title: Petstore Aggregator API
   version: 1.0.0
-  description: API нашего сервиса, который объединяет данные из Pet и Store сервисов.
 paths:
   /aggregate/{petId}/{storeId}:
     get:
       tags:
         - aggregate
-      summary: Получить агрегированную информацию о питомце и заказе
+      summary: Получить агрегированную информацию
       operationId: aggregatePetAndStore
       parameters:
         - name: petId
@@ -17,12 +16,15 @@ paths:
           schema:
             type: integer
             format: int64
+            minimum: 1          # ID не может быть меньше 1
+            maximum: 999999     # Пример верхнего порога
         - name: storeId
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 1          # ID не может быть меньше 1
       responses:
         '200':
           description: Успешная агрегация данных
@@ -30,18 +32,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AggregatedInfo'
+        '400':                  # Добавили описание для ошибки валидации
+          description: Некорректные входные данные
         '404':
-          description: Данные не найдены в одном из внешних сервисов
+          description: Данные не найдены
 components:
   schemas:
     AggregatedInfo:
       type: object
+      required:                 # Помечаем поля как обязательные в ответе
+        - petName
+        - storeStatus
       properties:
         petName:
           type: string
-          description: Имя питомца, полученное из Pet Service
+          minLength: 2          # Имя не короче 2 символов
+          maxLength: 50         # Ограничение длины
           example: "Barsik"
         storeStatus:
           type: string
-          description: Статус заказа, полученный из Store Service
+          pattern: '^[a-z]+$'   # Статус только строчными буквами (RegEx)
           example: "delivered"

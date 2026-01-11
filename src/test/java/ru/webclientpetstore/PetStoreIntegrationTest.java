@@ -1,6 +1,8 @@
 package ru.webclientpetstore;
 
 
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import ru.webclientpetstore.service.PetStoreService;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +22,9 @@ class PetStoreIntegrationTest {
 
     @Autowired
     private PetStoreService petStoreService;
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     // Регистрируем WireMock сервер на динамическом порту
     @RegisterExtension
@@ -117,5 +122,33 @@ class PetStoreIntegrationTest {
                         "Unknown (Service Unavailable)".equals(info.getPetName()) &&
                                 "N/A".equals(info.getStoreStatus()))
                 .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Интеграция: внешнее API возвращает 404 -> Наш контроллер возвращает ProblemDetail 404")
+    void shouldReturn404ProblemDetailWhenExternalServiceReturns404() {
+        // 1. Настраиваем WireMock на возврат 404 для конкретного ID
+        wireMock.stubFor(get(urlEqualTo("/pet/404"))
+                .willReturn(aResponse()
+                        .withStatus(404)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"message\": \"Pet not found in external system\"}")));
+
+        // Store API пусть отвечает успешно
+        wireMock.stubFor(get(urlPathMatching("/store/.*"))
+                .willReturn(okJson("{\"id\": 1, \"status\": \"open\"}")));
+
+        // 2. Вызываем наш КОНТРОЛЛЕР (не сервис напрямую!)
+        webTestClient.get()
+                .uri("/aggregate/404/1")
+                .exchange()
+                // 3. Проверяем, что GlobalExceptionHandler отработал
+                .expectStatus().isNotFound()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.title").isEqualTo("Сущность не найдена")
+                .jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("404"))
+                .jsonPath("$.instance").isEqualTo("/aggregate/404/1");
     }
 }

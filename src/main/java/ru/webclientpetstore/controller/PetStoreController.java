@@ -21,7 +21,7 @@ public class PetStoreController implements AggregateApi {
     public Mono<ResponseEntity<AggregatedInfo>> aggregatePetAndStore(
             Long petId, Long storeId, ServerWebExchange exchange) {
         return petStoreService.getAggregatedData(petId, storeId)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok);
+//                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }
